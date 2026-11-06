@@ -30,7 +30,7 @@ const INITIAL_USERS = [
   { username: '2A02', password: '2A02', permission: 1 },
   { username: '2A03', password: '2A03', permission: 1 },
   { username: '2A04', password: '2A04', permission: 1 },
-  { username: '2A05', password: '2A05', permission: 3 }, // LV.3 Boss
+  { username: '2A05', password: 'Tony3/28', permission: 3 }, // LV.3 Boss
   { username: '2A06', password: '2A06', permission: 1 },
   { username: '2A07', password: '2A07', permission: 1 },
   { username: '2A08', password: '2A08', permission: 1 },
