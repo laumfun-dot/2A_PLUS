@@ -1,0 +1,597 @@
+<Edit className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => deleteHomework(hw.id)}
+                          className="p-2 text-slate-400 hover:text-red-400 hover:bg-slate-800 rounded-xl transition-all"
+                          title="刪除"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* MODULE 2: QUIZ & EXAM */}
+        {activeTab === 'exam' && (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-bold flex items-center gap-2">
+                <FileSpreadsheet className="text-amber-400" /> Quiz / Examination 清單
+              </h2>
+              <p className="text-slate-400 text-sm mt-1">緊貼測驗、小測及期末考試日程與考核範圍</p>
+            </div>
+
+            {currentUser.permission >= 2 && (
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                <h3 className="text-base font-semibold text-amber-400 mb-4 flex items-center gap-2">
+                  {editingExamId ? <Edit className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                  {editingExamId ? '修改測驗/考試' : '新增測驗/考試日程'}
+                </h3>
+                <form onSubmit={handleSaveExam} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <select
+                    value={exType}
+                    onChange={(e) => setExType(e.target.value)}
+                    className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200"
+                  >
+                    <option value="Quiz">Quiz (小測)</option>
+                    <option value="Test">Test (測驗)</option>
+                    <option value="Examination">Examination (考試)</option>
+                  </select>
+                  <input
+                    type="text"
+                    required
+                    placeholder="科目"
+                    value={exSubject}
+                    onChange={(e) => setExSubject(e.target.value)}
+                    className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm"
+                  />
+                  <input
+                    type="date"
+                    required
+                    value={exDate}
+                    onChange={(e) => setExDate(e.target.value)}
+                    className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200"
+                  />
+                  <input
+                    type="text"
+                    required
+                    placeholder="考核範圍 / 內容"
+                    value={exContent}
+                    onChange={(e) => setExContent(e.target.value)}
+                    className="md:col-span-2 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm"
+                  />
+                  <input
+                    type="text"
+                    placeholder="備註 (例如: 帶計算機)"
+                    value={exRemark}
+                    onChange={(e) => setExRemark(e.target.value)}
+                    className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm"
+                  />
+                  <div className="md:col-span-3 flex justify-end gap-2">
+                    <button
+                      type="submit"
+                      className="bg-amber-600 hover:bg-amber-500 text-white font-semibold px-6 py-2.5 rounded-xl text-sm transition-all shadow-md shadow-amber-600/20"
+                    >
+                      {editingExamId ? '儲存修改' : '發布日程'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 gap-4">
+              {examList.map((ex) => (
+                <div key={ex.id} className="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex justify-between items-center">
+                  <div className="space-y-1">
+                    <div className="flex items-center space-x-2">
+                      <span className={`text-xs px-2.5 py-0.5 rounded-md font-bold ${
+                        ex.type === 'Examination' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                      }`}>
+                        {ex.type}
+                      </span>
+                      <span className="font-bold text-lg text-slate-100">{ex.subject}</span>
+                    </div>
+                    <p className="text-slate-300 font-medium">{ex.content}</p>
+                    {ex.remark && <p className="text-slate-500 text-xs">備註: {ex.remark}</p>}
+                  </div>
+                  <div className="text-right space-y-2">
+                    <div className="text-amber-400 font-mono font-bold text-lg flex items-center gap-1.5 justify-end">
+                      <Calendar className="w-4 h-4" />
+                      {ex.date}
+                    </div>
+                    {currentUser.permission >= 2 && (
+                      <div className="flex justify-end gap-2">
+                        <button onClick={() => startEditExam(ex)} className="p-1.5 text-slate-400 hover:text-blue-400 hover:bg-slate-800 rounded-lg">
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => deleteExam(ex.id)} className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-slate-800 rounded-lg">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* MODULE 3: ANNOUNCEMENTS */}
+        {activeTab === 'announcement' && (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-bold flex items-center gap-2">
+                <Megaphone className="text-emerald-400" /> 重要 Announcements
+              </h2>
+              <p className="text-slate-400 text-sm mt-1">全班最新通知、班委佈告與學校活動廣播</p>
+            </div>
+
+            {currentUser.permission >= 2 && (
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                <h3 className="text-base font-semibold text-emerald-400 mb-4 flex items-center gap-2">
+                  {editingAnnId ? <Edit className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                  {editingAnnId ? '修改公告' : '發布班級公告'}
+                </h3>
+                <form onSubmit={handleSaveAnnouncement} className="space-y-4">
+                  <input
+                    type="text"
+                    required
+                    placeholder="公告標題"
+                    value={annTitle}
+                    onChange={(e) => setAnnTitle(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm"
+                  />
+                  <textarea
+                    required
+                    placeholder="詳細公告內容..."
+                    value={annContent}
+                    onChange={(e) => setAnnContent(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-sm h-28"
+                  />
+                  <div className="flex items-center justify-between">
+                    <label className="flex items-center gap-2 cursor-pointer text-xs text-red-400 font-semibold">
+                      <input
+                        type="checkbox"
+                        checked={annUrgent}
+                        onChange={(e) => setAnnUrgent(e.target.checked)}
+                      />
+                      標記為「緊急公告」
+                    </label>
+                    <button
+                      type="submit"
+                      className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-6 py-2.5 rounded-xl text-sm transition-all shadow-md shadow-emerald-600/20"
+                    >
+                      {editingAnnId ? '儲存更新' : '發布公告'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            <div className="space-y-4">
+              {announcements.map((ann) => (
+                <div
+                  key={ann.id}
+                  className={`bg-slate-900 border rounded-2xl p-6 relative ${
+                    ann.urgent ? 'border-red-500/50 bg-red-950/10' : 'border-slate-800'
+                  }`}
+                >
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex items-center space-x-3">
+                      {ann.urgent && (
+                        <span className="bg-red-600 text-white text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider">
+                          緊急
+                        </span>
+                      )}
+                      <h3 className="text-xl font-bold text-slate-100">{ann.title}</h3>
+                    </div>
+                    <span className="text-xs text-slate-500 font-mono">{ann.date}</span>
+                  </div>
+                  <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-line mb-4">{ann.content}</p>
+                  <div className="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800/60 pt-3">
+                    <span>發布者: {ann.author}</span>
+                    {currentUser.permission >= 2 && (
+                      <div className="flex gap-2">
+                        <button onClick={() => startEditAnnouncement(ann)} className="text-blue-400 hover:underline">
+                          編輯
+                        </button>
+                        <button onClick={() => deleteAnnouncement(ann.id)} className="text-red-400 hover:underline">
+                          刪除
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* MODULE 4: QA ZONE */}
+        {activeTab === 'qa' && (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-bold flex items-center gap-2">
+                <HelpCircle className="text-purple-400" /> 課業互助區
+              </h2>
+              <p className="text-slate-400 text-sm mt-1">提出課業疑難，全班同學共同解答討論（Admin/Boss 可管理及標記狀態）</p>
+            </div>
+
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+              <h3 className="text-base font-semibold text-purple-400 mb-4 flex items-center gap-2">
+                <Plus className="w-4 h-4" /> 我要發問
+              </h3>
+              <form onSubmit={handleAddQa} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <select
+                    value={qaSubject}
+                    onChange={(e) => setQaSubject(e.target.value)}
+                    className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200"
+                  >
+                    <option value="數學">數學科</option>
+                    <option value="中文">中文科</option>
+                    <option value="英文">英文科</option>
+                    <option value="科學">科學科</option>
+                    <option value="其他">其他科目</option>
+                  </select>
+                  <input
+                    type="text"
+                    required
+                    placeholder="問題簡短標題"
+                    value={qaTitle}
+                    onChange={(e) => setQaTitle(e.target.value)}
+                    className="md:col-span-3 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm"
+                  />
+                </div>
+                <textarea
+                  required
+                  placeholder="詳細說明遇到難題嘅題目頁數或步驟..."
+                  value={qaContent}
+                  onChange={(e) => setQaContent(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-sm h-24"
+                />
+                <button
+                  type="submit"
+                  className="bg-purple-600 hover:bg-purple-500 text-white font-semibold px-6 py-2.5 rounded-xl text-sm transition-all shadow-md shadow-purple-600/20"
+                >
+                  提交問題
+                </button>
+              </form>
+            </div>
+
+            <div className="space-y-4">
+              {qaList.map((qa) => (
+                <div key={qa.id} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+                  <div className="flex justify-between items-start">
+                    <div className="space-y-1">
+                      <div className="flex items-center space-x-2">
+                        <span className="bg-purple-500/20 text-purple-400 border border-purple-500/30 text-xs px-2 py-0.5 rounded-md font-bold">
+                          {qa.subject}
+                        </span>
+                        {qa.resolved && (
+                          <span className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs px-2 py-0.5 rounded-md font-bold">
+                            已解決
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="text-lg font-bold text-slate-100">{qa.title}</h3>
+                    </div>
+                    <div className="text-right text-xs text-slate-500">
+                      <div>發問同學: {qa.author}</div>
+                      {currentUser.permission >= 2 && (
+                        <div className="flex gap-2 justify-end mt-2">
+                          <button onClick={() => toggleQaResolved(qa.id)} className="text-emerald-400 hover:underline">
+                            {qa.resolved ? '標記未解決' : '標記已解決'}
+                          </button>
+                          <button onClick={() => deleteQaQuestion(qa.id)} className="text-red-400 hover:underline">
+                            刪除問題
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <p className="text-slate-300 text-sm">{qa.content}</p>
+
+                  {/* Answers Section */}
+                  <div className="border-t border-slate-800 pt-4 space-y-3">
+                    <h4 className="text-xs font-semibold text-slate-400">同學解答 ({qa.answers.length})</h4>
+                    {qa.answers.map((ans) => (
+                      <div key={ans.id} className="bg-slate-950 p-3.5 rounded-xl border border-slate-800/80 text-sm flex justify-between items-start">
+                        <div className="space-y-1">
+                          <span className="text-xs text-blue-400 font-semibold">{ans.author} 回覆：</span>
+                          <p className="text-slate-200">{ans.content}</p>
+                        </div>
+                        {currentUser.permission >= 2 && (
+                          <button onClick={() => deleteQaAnswer(qa.id, ans.id)} className="text-red-400 hover:text-red-300 text-xs">
+                            刪除
+                          </button>
+                        )}
+                      </div>
+                    ))}
+
+                    <div className="flex gap-2 pt-2">
+                      <input
+                        type="text"
+                        placeholder="撰寫解答..."
+                        value={ansTextMap[qa.id] || ''}
+                        onChange={(e) => setAnsTextMap({ ...ansTextMap, [qa.id]: e.target.value })}
+                        className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-200"
+                      />
+                      <button
+                        onClick={() => handleAddAnswer(qa.id)}
+                        className="bg-blue-600 hover:bg-blue-500 text-white font-medium px-4 py-2 rounded-xl text-sm"
+                      >
+                        回覆
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* MODULE 5: CLASS POLLS */}
+        {activeTab === 'vote' && (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-bold flex items-center gap-2">
+                <Vote className="text-indigo-400" /> 班會投票區
+              </h2>
+              <p className="text-slate-400 text-sm mt-1">參與班級活動決策，支援匿名及多選投票</p>
+            </div>
+
+            {currentUser.permission >= 2 && (
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                <h3 className="text-base font-semibold text-indigo-400 mb-4 flex items-center gap-2">
+                  {editingVoteId ? <Edit className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                  {editingVoteId ? '修改投票' : '發起新投票 (LV.2 / LV.3 管理員專屬)'}
+                </h3>
+                <form onSubmit={handleSaveVote} className="space-y-4">
+                  <input
+                    type="text"
+                    required
+                    placeholder="投票主題"
+                    value={voteTitle}
+                    onChange={(e) => setVoteTitle(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm"
+                  />
+                  <div className="space-y-2">
+                    <label className="text-xs text-slate-400 block">投票選項 (至少 2 項)</label>
+                    {voteOptions.map((opt, idx) => (
+                      <div key={idx} className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder={`選項 ${idx + 1}`}
+                          value={opt}
+                          onChange={(e) => handleOptionChange(idx, e.target.value)}
+                          className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm"
+                        />
+                        {voteOptions.length > 2 && (
+                          <button
+                            type="button"
+                            onClick={() => removeOptionField(idx)}
+                            className="p-2 text-red-400 hover:bg-slate-800 rounded-xl"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={addOptionField}
+                      className="text-xs text-indigo-400 hover:underline flex items-center gap-1 font-semibold"
+                    >
+                      <Plus className="w-3.5 h-3.5" /> 新增選項
+                    </button>
+                  </div>
+
+                  <div className="flex gap-6 text-xs text-slate-300 pt-2">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={voteIsAnonymous}
+                        onChange={(e) => setVoteIsAnonymous(e.target.checked)}
+                      />
+                      匿名投票
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={voteIsMultiple}
+                        onChange={(e) => setVoteIsMultiple(e.target.checked)}
+                      />
+                      允許多選
+                    </label>
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-6 py-2.5 rounded-xl text-sm transition-all shadow-md shadow-indigo-600/20"
+                  >
+                    {editingVoteId ? '儲存修改' : '發起投票'}
+                  </button>
+                </form>
+              </div>
+            )}
+
+            <div className="space-y-4">
+              {votes.map((v) => {
+                const totalVotesCount = v.options.reduce((acc, curr) => acc + curr.votes.length, 0);
+                return (
+                  <div key={v.id} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          {v.isAnonymous && <span className="bg-slate-800 text-slate-400 text-[10px] px-2 py-0.5 rounded">匿名</span>}
+                          {v.isMultiple && <span className="bg-indigo-500/20 text-indigo-400 text-[10px] px-2 py-0.5 rounded">多選</span>}
+                        </div>
+                        <h3 className="text-xl font-bold text-slate-100">{v.title}</h3>
+                      </div>
+                      {currentUser.permission >= 2 && (
+                        <div className="flex gap-2">
+                          <button onClick={() => startEditVote(v)} className="text-blue-400 hover:underline text-xs">
+                            編輯
+                          </button>
+                          <button onClick={() => deleteVote(v.id)} className="text-red-400 hover:underline text-xs">
+                            刪除
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-3">
+                      {v.options.map((opt) => {
+                        const hasVoted = opt.votes.includes(currentUser.username);
+                        const pct = totalVotesCount > 0 ? Math.round((opt.votes.length / totalVotesCount) * 100) : 0;
+                        return (
+                          <div key={opt.id} className="space-y-1.5">
+                            <button
+                              onClick={() => handleCastVote(v.id, opt.id)}
+                              className={`w-full flex justify-between items-center p-3 rounded-xl border text-sm transition-all ${
+                                hasVoted
+                                  ? 'bg-indigo-600/20 border-indigo-500/50 text-indigo-300 font-bold'
+                                  : 'bg-slate-950 border-slate-800 text-slate-300 hover:bg-slate-800/40'
+                              }`}
+                            >
+                              <span className="flex items-center gap-2">
+                                {hasVoted ? <CheckCircle2 className="w-4 h-4 text-indigo-400" /> : <Circle className="w-4 h-4 text-slate-600" />}
+                                {opt.text}
+                              </span>
+                              <span className="font-mono text-xs">{opt.votes.length} 票 ({pct}%)</span>
+                            </button>
+                            <div className="w-full bg-slate-950 h-2 rounded-full overflow-hidden border border-slate-800">
+                              <div className="bg-indigo-500 h-full transition-all duration-500" style={{ width: `${pct}%` }} />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* MODULE 6: LV.3 BOSS ADMIN DASHBOARD */}
+        {activeTab === 'admin' && currentUser.permission === 3 && (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-bold flex items-center gap-2">
+                <ShieldAlert className="text-purple-400" /> 後台帳號與權限控制 (LV.3 Boss 專屬)
+              </h2>
+              <p className="text-slate-400 text-sm mt-1">獨立覆寫 2A01–2A35 任何同學之登入密碼及升降權限等級 (1/2/3)</p>
+            </div>
+
+            {adminMsg && (
+              <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm p-4 rounded-xl flex items-center gap-2">
+                <Check className="w-4 h-4" />
+                {adminMsg}
+              </div>
+            )}
+
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+              <h3 className="text-base font-semibold text-purple-400 mb-4">修改帳號權限 / 重設密碼</h3>
+              <form onSubmit={handleUpdateUserData} className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                  <label className="block text-xs text-slate-400 mb-1">選擇同學</label>
+                  <select
+                    required
+                    value={selectedUser}
+                    onChange={(e) => {
+                      setSelectedUser(e.target.value);
+                      const u = users.find((item) => item.username === e.target.value);
+                      if (u) setNewPermLevel(u.permission);
+                    }}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200"
+                  >
+                    <option value="">-- 請選擇同學帳號 --</option>
+                    {users.map((u) => (
+                      <option key={u.username} value={u.username}>
+                        {u.username} (LV.{u.permission})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs text-slate-400 mb-1">新密碼 (留空則維持原狀)</label>
+                  <input
+                    type="text"
+                    placeholder="輸入新密碼"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs text-slate-400 mb-1">權限等級</label>
+                  <select
+                    value={newPermLevel}
+                    onChange={(e) => setNewPermLevel(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200"
+                  >
+                    <option value={1}>LV.1 - USER (閱讀及提交)</option>
+                    <option value={2}>LV.2 - ADMIN (班幹事/管理員)</option>
+                    <option value={3}>LV.3 - BOSS (最高擁有者)</option>
+                  </select>
+                </div>
+
+                <div className="flex items-end">
+                  <button
+                    type="submit"
+                    className="w-full bg-purple-600 hover:bg-purple-500 text-white font-semibold py-2.5 rounded-xl text-sm transition-all shadow-md shadow-purple-600/20"
+                  >
+                    覆寫帳號資料
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            {/* User List Table */}
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+              <table className="w-full text-left text-sm text-slate-300">
+                <thead className="bg-slate-950 text-xs uppercase text-slate-500 border-b border-slate-800 font-mono">
+                  <tr>
+                    <th className="p-4">學號 (Username)</th>
+                    <th className="p-4">登入密碼</th>
+                    <th className="p-4">權限級別</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60">
+                  {users.map((u) => (
+                    <tr key={u.username} className="hover:bg-slate-800/30 transition-colors">
+                      <td className="p-4 font-bold text-slate-100 font-mono">{u.username}</td>
+                      <td className="p-4 font-mono text-slate-400">{u.password}</td>
+                      <td className="p-4">
+                        <span
+                          className={`text-xs px-2.5 py-0.5 rounded-md font-extrabold ${
+                            u.permission === 3
+                              ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
+                              : u.permission === 2
+                              ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                              : 'bg-slate-800 text-slate-400'
+                          }`}
+                        >
+                          {u.permission === 3 ? 'LV.3 BOSS' : u.permission === 2 ? 'LV.2 ADMIN' : 'LV.1 USER'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}
