@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   BookOpen, 
   FileSpreadsheet, 
@@ -20,8 +20,10 @@ import {
   Check, 
   X,
   MessageSquare,
-  ThumbsUp,
-  Tag
+  Sparkles,
+  Filter,
+  Layers,
+  Award
 } from 'lucide-react';
 
 // --- INITIAL USER ACCOUNTS (2A01 - 2A35) ---
@@ -30,7 +32,7 @@ const INITIAL_USERS = [
   { username: '2A02', password: '2A02', permission: 1 },
   { username: '2A03', password: '2A03', permission: 1 },
   { username: '2A04', password: '2A04', permission: 1 },
-  { username: '2A05', password: 'Tony3/28', permission: 3 }, // LV.3 Boss
+  { username: '2A05', password: '2A05', permission: 3 }, // LV.3 Boss
   { username: '2A06', password: '2A06', permission: 1 },
   { username: '2A07', password: '2A07', permission: 1 },
   { username: '2A08', password: '2A08', permission: 1 },
@@ -64,15 +66,23 @@ const INITIAL_USERS = [
 ];
 
 export default function App() {
-  // Session & User State
+  // Session & Accounts State
   const [users, setUsers] = useState(() => {
-    const saved = localStorage.getItem('2aplus_users');
-    return saved ? JSON.parse(saved) : INITIAL_USERS;
+    try {
+      const saved = localStorage.getItem('2aplus_users');
+      return saved ? JSON.parse(saved) : INITIAL_USERS;
+    } catch (e) {
+      return INITIAL_USERS;
+    }
   });
 
   const [currentUser, setCurrentUser] = useState(() => {
-    const saved = localStorage.getItem('2aplus_current_user');
-    return saved ? JSON.parse(saved) : null;
+    try {
+      const saved = localStorage.getItem('2aplus_current_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
   });
 
   // Login Form State
@@ -89,9 +99,9 @@ export default function App() {
       id: 1,
       subject: '數學科',
       teacher: '陳老師',
-      content: '完成工作紙 Ch.4 習題',
+      content: '完成工作紙 Ch.4 習題 (Q1 - Q15)',
       page: 'P.12 - P.14',
-      remark: '下星期一交，逾期扣分',
+      remark: '請寫齊算式，下星期一交，逾期扣分',
       startDate: '2026-11-02',
       endDate: '2026-11-09',
       completedUsers: ['2A01', '2A05']
@@ -100,12 +110,12 @@ export default function App() {
       id: 2,
       subject: '中文科',
       teacher: '李老師',
-      content: '單元二 閱讀理解練習',
+      content: '單元二 閱讀理解練習冊第 4 課',
       page: 'P.45 - P.48',
-      remark: '請準備預習課文',
+      remark: '請預習文言文詞彙',
       startDate: '2026-11-05',
       endDate: '2026-11-10',
-      completedUsers: []
+      completedUsers: ['2A17']
     }
   ]);
 
@@ -115,15 +125,15 @@ export default function App() {
       type: 'Quiz',
       subject: '英文科',
       content: 'Unit 3 Vocabulary & Grammar (Present Perfect)',
-      remark: '包含默書',
+      remark: '包含默書 (Dictation P.24)',
       date: '2026-11-12'
     },
     {
       id: 2,
       type: 'Examination',
       subject: '科學科',
-      content: 'Ch.1 - Ch.3 綜合測試',
-      remark: '帶計算機及畫圖工具',
+      content: 'Ch.1 - Ch.3 綜合單元測試',
+      remark: '請準備計算機及畫圖工具',
       date: '2026-11-20'
     }
   ]);
@@ -131,8 +141,8 @@ export default function App() {
   const [announcements, setAnnouncements] = useState([
     {
       id: 1,
-      title: '班會旅行地點收集意見',
-      content: '請所有同學於本週五前在投票區完成「秋季班會旅行地點」投票。',
+      title: '秋季班會旅行地點意見收集及投票',
+      content: '請所有同學於本週五前在「班會投票區」完成投票。地點選項包含西貢、迪士尼及海洋公園。',
       author: '2A05 (Boss)',
       date: '2026-11-01',
       urgent: true
@@ -143,15 +153,15 @@ export default function App() {
     {
       id: 1,
       author: '2A02',
-      title: '數學 P.14 第 8 題點樣做？',
-      content: '關於二次方程求解，試咗公式法算唔出整數，有冇人可以教下？',
+      title: '數學 P.14 第 8 題因式分解點樣做？',
+      content: '試咗公式法算唔出整數，求數理大神解惑！',
       subject: '數學',
       resolved: false,
       answers: [
         {
           id: 101,
           author: '2A17',
-          content: '呢題要先將右邊移項變做 ax^2 + bx + c = 0 形式，然後因式分解就拆到。'
+          content: '呢題要先將右邊移項變做 ax^2 + bx + c = 0 形式，然後用交叉相乘拆開就做到。'
         }
       ]
     }
@@ -160,29 +170,28 @@ export default function App() {
   const [votes, setVotes] = useState([
     {
       id: 1,
-      title: '2026 秋季班郊遊地點選擇',
+      title: '2026 秋季班會旅行地點選擇',
       isMultiple: false,
       isAnonymous: true,
       options: [
-        { id: 1, text: '西貢海濱公園 (燒烤)', votes: ['2A01', '2A02', '2A05'] },
-        { id: 2, text: '迪士尼樂園', votes: ['2A06', '2A17'] },
-        { id: 3, text: '海洋公園', votes: ['2A28'] }
+        { id: 1, text: '西貢海濱公園 (BBQ 燒烤)', votes: ['2A01', '2A02', '2A05'] },
+        { id: 2, text: '香港迪士尼樂園', votes: ['2A06', '2A17'] },
+        { id: 3, text: '香港海洋公園', votes: ['2A28'] }
       ]
     }
   ]);
 
-  // Editing state placeholders
+  // Form edit targets
   const [editingHwId, setEditingHwId] = useState(null);
   const [editingExamId, setEditingExamId] = useState(null);
   const [editingAnnId, setEditingAnnId] = useState(null);
   const [editingVoteId, setEditingVoteId] = useState(null);
 
-  // Sync users to LocalStorage
+  // Persistence Sync
   useEffect(() => {
     localStorage.setItem('2aplus_users', JSON.stringify(users));
   }, [users]);
 
-  // Sync current user
   useEffect(() => {
     if (currentUser) {
       localStorage.setItem('2aplus_current_user', JSON.stringify(currentUser));
@@ -194,8 +203,9 @@ export default function App() {
   // --- AUTH HANDLERS ---
   const handleLogin = (e) => {
     e.preventDefault();
+    const formattedInput = loginUsername.trim().toUpperCase();
     const found = users.find(
-      (u) => u.username.toUpperCase() === loginUsername.trim().toUpperCase() && u.password === loginPassword
+      (u) => u.username.toUpperCase() === formattedInput && u.password === loginPassword
     );
 
     if (found) {
@@ -204,7 +214,7 @@ export default function App() {
       setLoginUsername('');
       setLoginPassword('');
     } else {
-      setLoginError('用戶名稱或密碼錯誤！');
+      setLoginError('用戶名稱或密碼錯誤！請檢查後重新輸入。');
     }
   };
 
@@ -227,7 +237,7 @@ export default function App() {
         if (u.username === selectedUser) {
           return {
             ...u,
-            password: newPassword ? newPassword : u.password,
+            password: newPassword.trim() ? newPassword.trim() : u.password,
             permission: Number(newPermLevel)
           };
         }
@@ -238,13 +248,13 @@ export default function App() {
     if (currentUser && currentUser.username === selectedUser) {
       setCurrentUser((prev) => ({
         ...prev,
-        password: newPassword ? newPassword : prev.password,
+        password: newPassword.trim() ? newPassword.trim() : prev.password,
         permission: Number(newPermLevel)
       }));
     }
 
     setAdminMsg(`成功更新 ${selectedUser} 的帳號資料與權限！`);
-    setTimeout(() => setAdminMsg(''), 3000);
+    setTimeout(() => setAdminMsg(''), 3500);
     setNewPassword('');
   };
 
@@ -361,7 +371,7 @@ export default function App() {
     setExamList(examList.filter((e) => e.id !== id));
   };
 
-  // --- ANNOUNCEMENT HANDLERS (LV.2/LV.3) ---
+  // --- ANNOUNCEMENT HANDLERS ---
   const [annTitle, setAnnTitle] = useState('');
   const [annContent, setAnnContent] = useState('');
   const [annUrgent, setAnnUrgent] = useState(false);
@@ -403,9 +413,10 @@ export default function App() {
   };
 
   // --- QA HANDLERS ---
-  const [qaSubject, setQaSubject] = useState('通用');
+  const [qaSubject, setQaSubject] = useState('數學');
   const [qaTitle, setQaTitle] = useState('');
   const [qaContent, setQaContent] = useState('');
+  const [ansTextMap, setAnsTextMap] = useState({});
 
   const handleAddQa = (e) => {
     e.preventDefault();
@@ -421,8 +432,6 @@ export default function App() {
     setQaList([newQa, ...qaList]);
     setQaTitle(''); setQaContent('');
   };
-
-  const [ansTextMap, setAnsTextMap] = useState({});
 
   const handleAddAnswer = (qaId) => {
     const text = ansTextMap[qaId];
@@ -464,7 +473,7 @@ export default function App() {
     );
   };
 
-  // --- VOTING HANDLERS (LV.2/LV.3 Full Control) ---
+  // --- VOTING HANDLERS ---
   const [voteTitle, setVoteTitle] = useState('');
   const [voteOptions, setVoteOptions] = useState(['', '']);
   const [voteIsAnonymous, setVoteIsAnonymous] = useState(true);
@@ -563,24 +572,24 @@ export default function App() {
     );
   };
 
-  // --- RENDER LOGIN IF NOT AUTHENTICATED ---
+  // --- LOGIN SCREEN IF NOT LOGGED IN ---
   if (!currentUser) {
     return (
-      <div className="min-h-screen bg-slate-900 text-slate-100 flex items-center justify-center p-4">
-        <div className="w-full max-w-md bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 p-8">
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-500/30">
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4 font-sans">
+        <div className="w-full max-w-md bg-slate-900 rounded-3xl shadow-2xl border border-slate-800 p-8 space-y-6">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-gradient-to-tr from-blue-600 to-indigo-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-500/25">
               <BookOpen className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-blue-400 to-indigo-300 bg-clip-text text-transparent">
+            <h1 className="text-3xl font-black tracking-tight bg-gradient-to-r from-blue-400 via-indigo-300 to-purple-300 bg-clip-text text-transparent">
               2Aplus 內部平台
             </h1>
-            <p className="text-slate-400 text-sm mt-2">中學 2A 班專屬學術與交流系統</p>
+            <p className="text-slate-400 text-sm mt-1.5">中學 2A 班雲端學術與班會管理系統</p>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-5">
+          <form onSubmit={handleLogin} className="space-y-4">
             {loginError && (
-              <div className="bg-red-500/10 border border-red-500/50 rounded-xl p-3 flex items-center text-red-400 text-sm">
+              <div className="bg-red-500/10 border border-red-500/50 rounded-xl p-3 flex items-center text-red-400 text-xs">
                 <AlertCircle className="w-4 h-4 mr-2 flex-shrink-0" />
                 {loginError}
               </div>
@@ -591,14 +600,14 @@ export default function App() {
                 學號 / 用戶名稱 (Username)
               </label>
               <div className="relative">
-                <User className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                <User className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
                 <input
                   type="text"
                   required
                   placeholder="例如: 2A01 或 2A05"
                   value={loginUsername}
                   onChange={(e) => setLoginUsername(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl py-3 pl-10 pr-4 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 pl-11 pr-4 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-sm font-medium"
                 />
               </div>
             </div>
@@ -608,29 +617,32 @@ export default function App() {
                 密碼 (Password)
               </label>
               <div className="relative">
-                <Key className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                <Key className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
                 <input
                   type="password"
                   required
                   placeholder="輸入密碼"
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl py-3 pl-10 pr-4 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 pl-11 pr-4 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-sm font-medium"
                 />
               </div>
             </div>
 
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold py-3 rounded-xl shadow-lg shadow-blue-600/30 transition-all active:scale-[0.98]"
+              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-blue-600/30 transition-all active:scale-[0.99] text-sm"
             >
               登入系統
             </button>
           </form>
 
-          <div className="mt-8 pt-6 border-t border-slate-700/50 text-xs text-slate-500 text-center space-y-1">
-            <p>預設登入：2A01 – 2A35 (密碼同學號)</p>
-            <p>LV.3 Boss 帳號：<span className="text-blue-400 font-mono">2A05</span> | LV.2 Admin: <span className="text-amber-400 font-mono">2A17, 2A28</span></p>
+          <div className="pt-4 border-t border-slate-800/80 text-xs text-slate-500 space-y-1.5 text-center">
+            <p>全班預設帳號：<span className="text-slate-300 font-mono">2A01</span> – <span className="text-slate-300 font-mono">2A35</span> (預設密碼同學號)</p>
+            <div className="flex justify-center gap-4 pt-1">
+              <span>LV.3 Boss: <strong className="text-purple-400 font-mono">2A05</strong></span>
+              <span>LV.2 Admin: <strong className="text-amber-400 font-mono">2A17, 2A28</strong></span>
+            </div>
           </div>
         </div>
       </div>
@@ -639,29 +651,29 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
-      {/* --- TOP NAVBAR --- */}
+      {/* TOP HEADER */}
       <header className="bg-slate-900 border-b border-slate-800 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
-              <BookOpen className="w-6 h-6 text-white" />
+            <div className="w-9 h-9 bg-gradient-to-tr from-blue-600 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
+              <BookOpen className="w-5 h-5 text-white" />
             </div>
             <div>
-              <span className="text-xl font-black tracking-wider bg-gradient-to-r from-blue-400 to-indigo-300 bg-clip-text text-transparent">
+              <span className="text-xl font-black tracking-tight bg-gradient-to-r from-blue-400 to-indigo-300 bg-clip-text text-transparent">
                 2Aplus
               </span>
-              <span className="ml-2 text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full border border-slate-700">
-                內部平台
+              <span className="ml-2 text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded-md border border-slate-700 font-medium">
+                班級平台
               </span>
             </div>
           </div>
 
           <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2 bg-slate-800/80 border border-slate-700 px-3 py-1.5 rounded-xl">
+            <div className="flex items-center space-x-2.5 bg-slate-800/80 border border-slate-700 px-3.5 py-1.5 rounded-xl">
               <User className="w-4 h-4 text-blue-400" />
-              <span className="text-sm font-medium">{currentUser.username}</span>
+              <span className="text-sm font-semibold">{currentUser.username}</span>
               <span
-                className={`text-xs px-2 py-0.5 rounded-md font-semibold ${
+                className={`text-[11px] px-2 py-0.5 rounded-md font-extrabold ${
                   currentUser.permission === 3
                     ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
                     : currentUser.permission === 2
@@ -676,20 +688,20 @@ export default function App() {
             <button
               onClick={handleLogout}
               className="p-2 text-slate-400 hover:text-red-400 hover:bg-slate-800 rounded-xl transition-all"
-              title="登出"
+              title="登出系統"
             >
               <LogOut className="w-5 h-5" />
             </button>
           </div>
         </div>
 
-        {/* --- NAVIGATION TABS --- */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-1 overflow-x-auto pb-2 sm:pb-0 scrollbar-none">
+        {/* NAVIGATION TABS */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-1 overflow-x-auto scrollbar-none border-t border-slate-800/50">
           {[
             { id: 'homework', label: '功課清單', icon: BookOpen },
             { id: 'exam', label: 'Quiz / Exam', icon: FileSpreadsheet },
             { id: 'announcement', label: '重要公告', icon: Megaphone },
-            { id: 'qa', label: '互助區', icon: HelpCircle },
+            { id: 'qa', label: '課業互助區', icon: HelpCircle },
             { id: 'vote', label: '班會投票', icon: Vote },
             ...(currentUser.permission === 3
               ? [{ id: 'admin', label: '後台帳號管理', icon: ShieldAlert }]
@@ -701,7 +713,7 @@ export default function App() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center space-x-2 px-4 py-3 text-sm font-medium border-b-2 whitespace-nowrap transition-all ${
+                className={`flex items-center space-x-2 px-4 py-3 text-sm font-semibold border-b-2 whitespace-nowrap transition-all ${
                   active
                     ? 'border-blue-500 text-blue-400 bg-slate-800/40'
                     : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/20'
@@ -715,26 +727,24 @@ export default function App() {
         </div>
       </header>
 
-      {/* --- MAIN CONTENT CONTAINER --- */}
+      {/* MAIN BODY AREA */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
-        {/* ================= TAB 1: HOMEWORK LIST ================= */}
+        {/* MODULE 1: HOMEWORK */}
         {activeTab === 'homework' && (
           <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h2 className="text-2xl font-bold flex items-center gap-2">
-                  <BookOpen className="text-blue-400" /> 班級功課清單
-                </h2>
-                <p className="text-slate-400 text-sm">查看科目的作業要求及截止日期</p>
-              </div>
+            <div>
+              <h2 className="text-2xl font-bold flex items-center gap-2">
+                <BookOpen className="text-blue-400" /> 班級功課清單
+              </h2>
+              <p className="text-slate-400 text-sm mt-1">查看科目的作業要求及截止日期，打勾標記為已完成</p>
             </div>
 
-            {/* Admin Add/Edit Homework Form */}
+            {/* LV.2 / LV.3 Homework Form */}
             {currentUser.permission >= 2 && (
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
-                <h3 className="text-lg font-semibold text-blue-400 mb-4 flex items-center gap-2">
-                  {editingHwId ? <Edit className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
+                <h3 className="text-base font-semibold text-blue-400 mb-4 flex items-center gap-2">
+                  {editingHwId ? <Edit className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
                   {editingHwId ? '修改功課項目 (LV.2 / LV.3 管理員專屬)' : '新增功課項目 (LV.2 / LV.3 管理員專屬)'}
                 </h3>
                 <form onSubmit={handleSaveHomework} className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -771,7 +781,7 @@ export default function App() {
                   />
                   <input
                     type="text"
-                    placeholder="備注"
+                    placeholder="備註說明"
                     value={hwRemark}
                     onChange={(e) => setHwRemark(e.target.value)}
                     className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm"
@@ -787,7 +797,7 @@ export default function App() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-slate-400 mb-1">結束/截止日期</label>
+                    <label className="block text-xs text-slate-400 mb-1">截止日期</label>
                     <input
                       type="date"
                       required
@@ -799,7 +809,7 @@ export default function App() {
                   <div className="flex items-end gap-2">
                     <button
                       type="submit"
-                      className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-medium py-2.5 rounded-xl transition-all shadow-md shadow-blue-600/20"
+                      className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-medium py-2.5 rounded-xl transition-all text-sm shadow-md shadow-blue-600/20"
                     >
                       {editingHwId ? '更新功課' : '發布功課'}
                     </button>
@@ -820,7 +830,7 @@ export default function App() {
               </div>
             )}
 
-            {/* Homework Cards */}
+            {/* List Display */}
             <div className="grid grid-cols-1 gap-4">
               {homeworkList.map((hw) => {
                 const isDone = hw.completedUsers.includes(currentUser.username);
@@ -828,7 +838,7 @@ export default function App() {
                   <div
                     key={hw.id}
                     className={`bg-slate-900 border rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all ${
-                      isDone ? 'border-emerald-500/30 bg-slate-900/50' : 'border-slate-800'
+                      isDone ? 'border-emerald-500/30 bg-slate-900/40 opacity-75' : 'border-slate-800'
                     }`}
                   >
                     <div className="flex items-start space-x-4">
@@ -852,10 +862,10 @@ export default function App() {
                             </span>
                           )}
                         </div>
-                        <p className="text-slate-300 mt-2 font-medium">{hw.content}</p>
+                        <p className={`mt-2 font-medium ${isDone ? 'line-through text-slate-400' : 'text-slate-200'}`}>{hw.content}</p>
                         {hw.remark && <p className="text-slate-500 text-xs mt-1">備註: {hw.remark}</p>}
                         <div className="flex items-center space-x-4 mt-3 text-xs text-slate-400">
-                          <span className="flex items-center gap-1">
+                          <span className="flex items-center gap-1 font-mono">
                             <Calendar className="w-3.5 h-3.5 text-slate-500" />
                             {hw.startDate} 至 {hw.endDate}
                           </span>
@@ -888,21 +898,20 @@ export default function App() {
           </div>
         )}
 
-        {/* ================= TAB 2: EXAM LIST ================= */}
+        {/* MODULE 2: EXAM */}
         {activeTab === 'exam' && (
           <div className="space-y-6">
             <div>
               <h2 className="text-2xl font-bold flex items-center gap-2">
                 <FileSpreadsheet className="text-amber-400" /> Quiz / Examination 清單
               </h2>
-              <p className="text-slate-400 text-sm">測驗與考試日程安排及範圍</p>
+              <p className="text-slate-400 text-sm mt-1">測驗與考試日程安排及測驗範圍</p>
             </div>
 
-            {/* Admin Add/Edit Exam Form */}
             {currentUser.permission >= 2 && (
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
-                <h3 className="text-lg font-semibold text-amber-400 mb-4 flex items-center gap-2">
-                  {editingExamId ? <Edit className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
+                <h3 className="text-base font-semibold text-amber-400 mb-4 flex items-center gap-2">
+                  {editingExamId ? <Edit className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
                   {editingExamId ? '修改測驗/考試項目' : '新增測驗/考試 (LV.2 / LV.3 管理員專屬)'}
                 </h3>
                 <form onSubmit={handleSaveExam} className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -933,14 +942,14 @@ export default function App() {
                   <input
                     type="text"
                     required
-                    placeholder="考核內容/範圍"
+                    placeholder="考核內容與範圍"
                     value={exContent}
                     onChange={(e) => setExContent(e.target.value)}
                     className="md:col-span-2 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm"
                   />
                   <input
                     type="text"
-                    placeholder="備注 (如必帶文具)"
+                    placeholder="備忘 (如帶計算機/文具)"
                     value={exRemark}
                     onChange={(e) => setExRemark(e.target.value)}
                     className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm"
@@ -948,9 +957,9 @@ export default function App() {
                   <div className="md:col-span-3 flex gap-2">
                     <button
                       type="submit"
-                      className="flex-1 bg-amber-600 hover:bg-amber-500 text-white font-medium py-2.5 rounded-xl transition-all shadow-md shadow-amber-600/20"
+                      className="flex-1 bg-amber-600 hover:bg-amber-500 text-white font-medium py-2.5 rounded-xl transition-all text-sm shadow-md shadow-amber-600/20"
                     >
-                      {editingExamId ? '更新測驗項目' : '新增測驗項目'}
+                      {editingExamId ? '更新項目' : '新增測驗項目'}
                     </button>
                     {editingExamId && (
                       <button
@@ -969,7 +978,6 @@ export default function App() {
               </div>
             )}
 
-            {/* Exam List Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {examList.map((ex) => (
                 <div key={ex.id} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 flex flex-col justify-between">
@@ -995,7 +1003,7 @@ export default function App() {
                     </div>
                   </div>
                   {currentUser.permission >= 2 && (
-                    <div className="pt-2 border-t border-slate-800 flex justify-end gap-3">
+                    <div className="pt-3 border-t border-slate-800 flex justify-end gap-3">
                       <button
                         onClick={() => startEditExam(ex)}
                         className="text-xs text-slate-400 hover:text-blue-400 flex items-center gap-1"
@@ -1016,22 +1024,21 @@ export default function App() {
           </div>
         )}
 
-        {/* ================= TAB 3: ANNOUNCEMENT ================= */}
+        {/* MODULE 3: ANNOUNCEMENT */}
         {activeTab === 'announcement' && (
           <div className="space-y-6 max-w-4xl mx-auto">
             <div>
               <h2 className="text-2xl font-bold flex items-center gap-2">
-                <Megaphone className="text-purple-400" /> Important Announcements (重要公告)
+                <Megaphone className="text-purple-400" /> 重要公告 (Announcements)
               </h2>
-              <p className="text-slate-400 text-sm">全班最新通知與緊急事項</p>
+              <p className="text-slate-400 text-sm mt-1">全班重要事項與即時通知</p>
             </div>
 
-            {/* Admin Add/Edit Announcement Form */}
             {currentUser.permission >= 2 && (
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
-                <h3 className="text-lg font-semibold text-purple-400 mb-4 flex items-center gap-2">
-                  {editingAnnId ? <Edit className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
-                  {editingAnnId ? '修改公告 (LV.2 / LV.3 管理員專屬)' : '發布重要公告 (LV.2 / LV.3 管理員專屬)'}
+                <h3 className="text-base font-semibold text-purple-400 mb-4 flex items-center gap-2">
+                  {editingAnnId ? <Edit className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                  {editingAnnId ? '修改公告' : '發布重要公告 (LV.2 / LV.3 管理員專屬)'}
                 </h3>
                 <form onSubmit={handleSaveAnnouncement} className="space-y-4">
                   <input
@@ -1063,7 +1070,7 @@ export default function App() {
                     <div className="flex gap-2">
                       <button
                         type="submit"
-                        className="bg-purple-600 hover:bg-purple-500 text-white font-medium px-6 py-2 rounded-xl transition-all shadow-md shadow-purple-600/20"
+                        className="bg-purple-600 hover:bg-purple-500 text-white font-medium px-6 py-2 rounded-xl transition-all text-sm shadow-md shadow-purple-600/20"
                       >
                         {editingAnnId ? '更新公告' : '發布公告'}
                       </button>
@@ -1120,20 +1127,19 @@ export default function App() {
           </div>
         )}
 
-        {/* ================= TAB 4: Q&A ZONE ================= */}
+        {/* MODULE 4: Q&A */}
         {activeTab === 'qa' && (
           <div className="space-y-6">
             <div>
               <h2 className="text-2xl font-bold flex items-center gap-2">
                 <HelpCircle className="text-emerald-400" /> 課業互助區
               </h2>
-              <p className="text-slate-400 text-sm">同學提出課業疑難 (如數理題)，其他同學或管理員可發帖回覆解答</p>
+              <p className="text-slate-400 text-sm mt-1">同學互助討論區，可提問、回答，管理員可標記「已解決」</p>
             </div>
 
-            {/* Ask Question Form (All Users) */}
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
-              <h3 className="text-lg font-semibold text-emerald-400 mb-4 flex items-center gap-2">
-                <Plus className="w-5 h-5" /> 我要發問
+              <h3 className="text-base font-semibold text-emerald-400 mb-4 flex items-center gap-2">
+                <Plus className="w-4 h-4" /> 發起提問
               </h3>
               <form onSubmit={handleAddQa} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -1160,21 +1166,20 @@ export default function App() {
                 <textarea
                   required
                   rows={3}
-                  placeholder="詳細描述你的疑問..."
+                  placeholder="詳細寫出你的疑問..."
                   value={qaContent}
                   onChange={(e) => setQaContent(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-sm text-slate-200 focus:outline-none"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-sm text-slate-200"
                 />
                 <button
                   type="submit"
-                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-6 py-2.5 rounded-xl transition-all shadow-md shadow-emerald-600/20"
+                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-6 py-2 rounded-xl transition-all text-sm shadow-md shadow-emerald-600/20"
                 >
-                  提交問題
+                  發布問題
                 </button>
               </form>
             </div>
 
-            {/* Question Cards */}
             <div className="space-y-6">
               {qaList.map((qa) => (
                 <div key={qa.id} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
@@ -1191,20 +1196,20 @@ export default function App() {
                       <h3 className="text-lg font-bold text-slate-100">{qa.title}</h3>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <span className="text-xs text-slate-500">提問者: {qa.author}</span>
+                      <span className="text-xs text-slate-500">提問: {qa.author}</span>
                       {currentUser.permission >= 2 && (
                         <>
                           <button
                             onClick={() => toggleQaResolved(qa.id)}
                             className="p-1.5 text-slate-400 hover:text-emerald-400 hover:bg-slate-800 rounded-lg text-xs flex items-center gap-1"
-                            title="標記已解決"
+                            title="切換解決狀態"
                           >
                             <CheckCircle2 className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => deleteQaQuestion(qa.id)}
                             className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-slate-800 rounded-lg text-xs"
-                            title="刪除發問"
+                            title="刪除"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -1215,22 +1220,18 @@ export default function App() {
 
                   <p className="text-slate-300 text-sm leading-relaxed">{qa.content}</p>
 
-                  {/* Answers Section */}
                   <div className="bg-slate-950/60 rounded-xl p-4 space-y-3">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">解答列表 ({qa.answers.length})</h4>
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">解答區 ({qa.answers.length})</h4>
                     {qa.answers.map((ans) => (
                       <div key={ans.id} className="border-b border-slate-800/60 pb-2 last:border-none flex justify-between items-start">
                         <div>
-                          <div className="flex items-center space-x-2 text-xs text-slate-400 mb-1">
-                            <span className="font-semibold text-blue-400">{ans.author} 回覆:</span>
-                          </div>
-                          <p className="text-sm text-slate-200">{ans.content}</p>
+                          <span className="font-semibold text-blue-400 text-xs">{ans.author}: </span>
+                          <span className="text-sm text-slate-200">{ans.content}</span>
                         </div>
                         {currentUser.permission >= 2 && (
                           <button
                             onClick={() => deleteQaAnswer(qa.id, ans.id)}
                             className="p-1 text-slate-500 hover:text-red-400"
-                            title="刪除此回覆"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -1238,11 +1239,10 @@ export default function App() {
                       </div>
                     ))}
 
-                    {/* Answer Input */}
                     <div className="flex gap-2 pt-2">
                       <input
                         type="text"
-                        placeholder="撰寫你的解答..."
+                        placeholder="撰寫解答..."
                         value={ansTextMap[qa.id] || ''}
                         onChange={(e) => setAnsTextMap({ ...ansTextMap, [qa.id]: e.target.value })}
                         className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 text-sm"
@@ -1251,7 +1251,7 @@ export default function App() {
                         onClick={() => handleAddAnswer(qa.id)}
                         className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-sm font-medium transition-all"
                       >
-                        回覆
+                        回答
                       </button>
                     </div>
                   </div>
@@ -1261,22 +1261,21 @@ export default function App() {
           </div>
         )}
 
-        {/* ================= TAB 5: CLASS VOTING ================= */}
+        {/* MODULE 5: VOTING */}
         {activeTab === 'vote' && (
           <div className="space-y-6 max-w-3xl mx-auto">
             <div>
               <h2 className="text-2xl font-bold flex items-center gap-2">
                 <Vote className="text-cyan-400" /> 班會投票區
               </h2>
-              <p className="text-slate-400 text-sm">支援匿名投票、單選/多選與即時結果分析</p>
+              <p className="text-slate-400 text-sm mt-1">匿名/公開投票，包含即時得票分析圖</p>
             </div>
 
-            {/* Admin Add/Edit Vote Form */}
             {currentUser.permission >= 2 && (
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
-                <h3 className="text-lg font-semibold text-cyan-400 mb-4 flex items-center gap-2">
-                  {editingVoteId ? <Edit className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
-                  {editingVoteId ? '修改投票活動 (LV.2 / LV.3 管理員專屬)' : '新增班會投票 (LV.2 / LV.3 管理員專屬)'}
+                <h3 className="text-base font-semibold text-cyan-400 mb-4 flex items-center gap-2">
+                  {editingVoteId ? <Edit className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                  {editingVoteId ? '修改投票' : '發起班會投票 (LV.2 / LV.3 管理員專屬)'}
                 </h3>
                 <form onSubmit={handleSaveVote} className="space-y-4">
                   <input
@@ -1345,7 +1344,7 @@ export default function App() {
                   <div className="flex gap-2 pt-2">
                     <button
                       type="submit"
-                      className="flex-1 bg-cyan-600 hover:bg-cyan-500 text-white font-medium py-2.5 rounded-xl transition-all shadow-md shadow-cyan-600/20"
+                      className="flex-1 bg-cyan-600 hover:bg-cyan-500 text-white font-medium py-2.5 rounded-xl transition-all text-sm shadow-md shadow-cyan-600/20"
                     >
                       {editingVoteId ? '更新投票' : '發起投票'}
                     </button>
@@ -1374,7 +1373,7 @@ export default function App() {
                   <div className="flex items-start justify-between">
                     <div>
                       <div className="flex items-center space-x-2">
-                        <span className="text-xs bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 px-2 py-0.5 rounded-md">
+                        <span className="text-xs bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 px-2 py-0.5 rounded-md font-semibold">
                           {vote.isAnonymous ? '匿名投票' : '公開投票'}
                         </span>
                         <span className="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded-md">
@@ -1404,8 +1403,7 @@ export default function App() {
                     )}
                   </div>
 
-                  {/* Options List */}
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     {vote.options.map((opt) => {
                       const count = opt.votes.length;
                       const percent = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
@@ -1419,19 +1417,18 @@ export default function App() {
                             hasVoted ? 'border-cyan-500 bg-cyan-950/20' : 'border-slate-800 hover:border-slate-700 bg-slate-950/40'
                           }`}
                         >
-                          {/* Progress Bar Background */}
                           <div
                             className="absolute top-0 left-0 bottom-0 bg-cyan-500/10 transition-all duration-500"
                             style={{ width: `${percent}%` }}
                           />
 
                           <div className="relative z-10 flex items-center justify-between">
-                            <span className="font-medium text-slate-200 flex items-center gap-2">
-                              {hasVoted ? <CheckCircle2 className="w-5 h-5 text-cyan-400" /> : <Circle className="w-5 h-5 text-slate-600" />}
+                            <span className="font-medium text-slate-200 flex items-center gap-2 text-sm">
+                              {hasVoted ? <CheckCircle2 className="w-4 h-4 text-cyan-400" /> : <Circle className="w-4 h-4 text-slate-600" />}
                               {opt.text}
                             </span>
                             <div className="text-right">
-                              <span className="font-bold text-cyan-400 font-mono">{percent}%</span>
+                              <span className="font-bold text-cyan-400 font-mono text-sm">{percent}%</span>
                               <span className="text-xs text-slate-500 block">{count} 票</span>
                             </div>
                           </div>
@@ -1440,35 +1437,34 @@ export default function App() {
                     })}
                   </div>
 
-                  <div className="text-xs text-slate-500 text-right">總累積投票人數: {totalVotes} 票</div>
+                  <div className="text-xs text-slate-500 text-right">累積投票次數: {totalVotes} 票</div>
                 </div>
               );
             })}
           </div>
         )}
 
-        {/* ================= TAB 6: LV.3 ADMIN PANEL ================= */}
+        {/* MODULE 6: LV.3 BOSS DASHBOARD */}
         {activeTab === 'admin' && currentUser.permission === 3 && (
           <div className="space-y-6 max-w-5xl mx-auto">
             <div>
               <h2 className="text-2xl font-bold flex items-center gap-2 text-purple-400">
-                <ShieldAlert /> LV.3 Boss 專屬後台 (帳號與權限重設)
+                <ShieldAlert /> LV.3 Boss 專屬控制台
               </h2>
-              <p className="text-slate-400 text-sm">可隨時強制重設 2A 班同學密碼或調整 Permission Level</p>
+              <p className="text-slate-400 text-sm mt-1">管理與重設 2A 班全體 35 位同學的帳號密碼與權限等級</p>
             </div>
 
             {adminMsg && (
-              <div className="bg-emerald-500/10 border border-emerald-500/40 text-emerald-400 rounded-xl p-4 flex items-center gap-2">
+              <div className="bg-emerald-500/10 border border-emerald-500/40 text-emerald-400 rounded-xl p-4 flex items-center gap-2 text-sm">
                 <Check className="w-5 h-5" /> {adminMsg}
               </div>
             )}
 
-            {/* Edit User Form */}
             <div className="bg-slate-900 border border-purple-500/30 rounded-2xl p-6 shadow-xl space-y-4">
-              <h3 className="text-lg font-bold text-slate-100">快速重設使用者資料</h3>
+              <h3 className="text-base font-bold text-slate-100">重設同學密碼與權限 (Quick Override)</h3>
               <form onSubmit={handleUpdateUserData} className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-xs text-slate-400 mb-1">選擇目標同學 (Username)</label>
+                  <label className="block text-xs text-slate-400 mb-1">目標同學 (Username)</label>
                   <select
                     value={selectedUser}
                     onChange={(e) => {
@@ -1488,7 +1484,7 @@ export default function App() {
                 </div>
 
                 <div>
-                  <label className="block text-xs text-slate-400 mb-1">重設新密碼 (留空則維持原密碼)</label>
+                  <label className="block text-xs text-slate-400 mb-1">設定新密碼 (留空代表不更換)</label>
                   <input
                     type="text"
                     placeholder="輸入新密碼"
@@ -1499,15 +1495,15 @@ export default function App() {
                 </div>
 
                 <div>
-                  <label className="block text-xs text-slate-400 mb-1">設定 Permission Level</label>
+                  <label className="block text-xs text-slate-400 mb-1">權限等級 (Permission)</label>
                   <select
                     value={newPermLevel}
                     onChange={(e) => setNewPermLevel(e.target.value)}
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200"
                   >
-                    <option value={1}>LV.1 - USERS (普通同學)</option>
-                    <option value={2}>LV.2 - ADMINS (班幹事)</option>
-                    <option value={3}>LV.3 - BOSS / OWNER (最高權限)</option>
+                    <option value={1}>LV.1 - USER (一般同學)</option>
+                    <option value={2}>LV.2 - ADMIN (班幹事)</option>
+                    <option value={3}>LV.3 - BOSS (最高權限)</option>
                   </select>
                 </div>
 
@@ -1515,17 +1511,16 @@ export default function App() {
                   <button
                     type="submit"
                     disabled={!selectedUser}
-                    className="w-full bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white font-semibold py-3 rounded-xl transition-all shadow-lg shadow-purple-600/20"
+                    className="w-full bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white font-semibold py-3 rounded-xl transition-all shadow-lg shadow-purple-600/20 text-sm"
                   >
-                    即時套用修改
+                    更新帳號資料
                   </button>
                 </div>
               </form>
             </div>
 
-            {/* All Users Overview Table */}
             <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
-              <div className="p-4 border-b border-slate-800 font-bold text-slate-200">全班 35 位同學帳號名單與權限對照</div>
+              <div className="p-4 border-b border-slate-800 font-bold text-slate-200 text-sm">全班 35 位同學帳號對照清單</div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm text-slate-300">
                   <thead className="bg-slate-950 text-slate-400 uppercase text-xs font-semibold">
