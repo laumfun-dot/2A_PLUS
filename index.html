@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2Aplus 內部平台</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & ReactDOM CDN -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Babel for JSX compilation in browser -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans antialiased">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const INITIAL_USERS = [
+            { username: '2A01', password: '2A01', permission: 1 },
+            { username: '2A02', password: '2A02', permission: 1 },
+            { username: '2A03', password: '2A03', permission: 1 },
+            { username: '2A04', password: '2A04', permission: 1 },
+            { username: '2A05', password: '2A05', permission: 3 }, // LV.3 Boss
+            { username: '2A06', password: '2A06', permission: 1 },
+            { username: '2A07', password: '2A07', permission: 1 },
+            { username: '2A08', password: '2A08', permission: 1 },
+            { username: '2A09', password: '2A09', permission: 1 },
+            { username: '2A10', password: '2A10', permission: 1 },
+            { username: '2A11', password: '2A11', permission: 1 },
+            { username: '2A12', password: '2A12', permission: 1 },
+            { username: '2A13', password: '2A13', permission: 1 },
+            { username: '2A14', password: '2A14', permission: 1 },
+            { username: '2A15', password: '2A15', permission: 1 },
+            { username: '2A16', password: '2A16', permission: 1 },
+            { username: '2A17', password: '2A17', permission: 2 }, // LV.2 Admin
+            { username: '2A18', password: '2A18', permission: 1 },
+            { username: '2A19', password: '2A19', permission: 1 },
+            { username: '2A20', password: '2A20', permission: 1 },
+            { username: '2A21', password: '2A21', permission: 1 },
+            { username: '2A22', password: '2A22', permission: 1 },
+            { username: '2A23', password: '2A23', permission: 1 },
+            { username: '2A24', password: '2A24', permission: 1 },
+            { username: '2A25', password: '2A25', permission: 1 },
+            { username: '2A26', password: '2A26', permission: 1 },
+            { username: '2A27', password: '2A27', permission: 1 },
+            { username: '2A28', password: '2A28', permission: 2 }, // LV.2 Admin
+            { username: '2A29', password: '2A29', permission: 1 },
+            { username: '2A30', password: '2A30', permission: 1 },
+            { username: '2A31', password: '2A31', permission: 1 },
+            { username: '2A32', password: '2A32', permission: 1 },
+            { username: '2A33', password: '2A33', permission: 1 },
+            { username: '2A34', password: '2A34', permission: 1 },
+            { username: '2A35', password: '2A35', permission: 1 },
+        ];
+
+        function App() {
+            const [users, setUsers] = useState(() => {
+                try {
+                    const saved = localStorage.getItem('2aplus_users');
+                    return saved ? JSON.parse(saved) : INITIAL_USERS;
+                } catch (e) {
+                    return INITIAL_USERS;
+                }
+            });
+
+            const [currentUser, setCurrentUser] = useState(() => {
+                try {
+                    const saved = localStorage.getItem('2aplus_current_user');
+                    return saved ? JSON.parse(saved) : null;
+                } catch (e) {
+                    return null;
+                }
+            });
+
+            const [loginUsername, setLoginUsername] = useState('');
+            const [loginPassword, setLoginPassword] = useState('');
+            const [loginError, setLoginError] = useState('');
+            const [activeTab, setActiveTab] = useState('homework');
+
+            // Data states
+            const [homeworkList, setHomeworkList] = useState([
+                { id: 1, subject: '數學科', teacher: '陳老師', content: '完成工作紙 Ch.4 習題 (Q1 - Q15)', page: 'P.12 - P.14', remark: '請寫齊算式', startDate: '2026-11-02', endDate: '2026-11-09', completedUsers: ['2A01', '2A05'] }
+            ]);
+            const [examList, setExamList] = useState([
+                { id: 1, type: 'Quiz', subject: '英文科', content: 'Unit 3 Vocabulary & Grammar', remark: '包含默書', date: '2026-11-12' }
+            ]);
+            const [announcements, setAnnouncements] = useState([
+                { id: 1, title: '秋季班會旅行地點意見收集', content: '請各同學於本週五前完成投票。', author: '2A05 (Boss)', date: '2026-11-01', urgent: true }
+            ]);
+            const [qaList, setQaList] = useState([
+                { id: 1, author: '2A02', subject: '數學', title: '數學 P.14 第 8 題點樣做？', content: '求大神解惑！', resolved: false, answers: [{ id: 101, author: '2A17', content: '移項再用公式即可。' }] }
+            ]);
+            const [votes, setVotes] = useState([
+                { id: 1, title: '2026 秋季班會旅行地點選擇', isMultiple: false, isAnonymous: true, options: [{ id: 1, text: '西貢海濱公園 (BBQ)', votes: ['2A01'] }, { id: 2, text: '迪士尼樂園', votes: [] }] }
+            ]);
+
+            // Form states
+            const [editingHwId, setEditingHwId] = useState(null);
+            const [hwSubject, setHwSubject] = useState(''); const [hwTeacher, setHwTeacher] = useState(''); const [hwContent, setHwContent] = useState(''); const [hwPage, setHwPage] = useState(''); const [hwRemark, setHwRemark] = useState(''); const [hwStart, setHwStart] = useState(''); const [hwEnd, setHwEnd] = useState('');
+
+            const [editingExamId, setEditingExamId] = useState(null);
+            const [exType, setExType] = useState('Quiz'); const [exSubject, setExSubject] = useState(''); const [exContent, setExContent] = useState(''); const [exRemark, setExRemark] = useState(''); const [exDate, setExDate] = useState('');
+
+            const [editingAnnId, setEditingAnnId] = useState(null);
+            const [annTitle, setAnnTitle] = useState(''); const [annContent, setAnnContent] = useState(''); const [annUrgent, setAnnUrgent] = useState(false);
+
+            const [qaSubject, setQaSubject] = useState('數學'); const [qaTitle, setQaTitle] = useState(''); const [qaContent, setQaContent] = useState(''); const [ansTextMap, setAnsTextMap] = useState({});
+
+            const [voteTitle, setVoteTitle] = useState(''); const [voteOptions, setVoteOptions] = useState(['', '']); const [voteIsAnonymous, setVoteIsAnonymous] = useState(true); const [voteIsMultiple, setVoteIsMultiple] = useState(false); const [editingVoteId, setEditingVoteId] = useState(null);
+
+            // Admin states
+            const [selectedUser, setSelectedUser] = useState(''); const [newPassword, setNewPassword] = useState(''); const [newPermLevel, setNewPermLevel] = useState(1); const [adminMsg, setAdminMsg] = useState('');
+
+            useEffect(() => { localStorage.setItem('2aplus_users', JSON.stringify(users)); }, [users]);
+            useEffect(() => {
+                if (currentUser) localStorage.setItem('2aplus_current_user', JSON.stringify(currentUser));
+                else localStorage.removeItem('2aplus_current_user');
+            }, [currentUser]);
+
+            const handleLogin = (e) => {
+                e.preventDefault();
+                const found = users.find(u => u.username.toUpperCase() === loginUsername.trim().toUpperCase() && u.password === loginPassword);
+                if (found) { setCurrentUser(found); setLoginError(''); setLoginUsername(''); setLoginPassword(''); }
+                else { setLoginError('用戶名稱或密碼錯誤！'); }
+            };
+
+            if (!currentUser) {
+                return (
+                    <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4">
+                        <div className="w-full max-w-md bg-slate-900 rounded-3xl shadow-2xl border border-slate-800 p-8 space-y-6">
+                            <div className="text-center">
+                                <h1 className="text-3xl font-black bg-gradient-to-r from-blue-400 to-indigo-300 bg-clip-text text-transparent">2Aplus 內部平台</h1>
+                                <p className="text-slate-400 text-sm mt-1">中學 2A 班雲端學術與管理系統</p>
+                            </div>
+                            <form onSubmit={handleLogin} className="space-y-4">
+                                {loginError && <div className="bg-red-500/10 border border-red-500/50 rounded-xl p-3 text-red-400 text-xs">{loginError}</div>}
+                                <div>
+                                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">學號 / 用戶名稱</label>
+                                    <input type="text" required placeholder="例如: 2A01 或 2A05" value={loginUsername} onChange={e => setLoginUsername(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 px-4 text-slate-100 text-sm" />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">密碼</label>
+                                    <input type="password" required placeholder="輸入密碼" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 px-4 text-slate-100 text-sm" />
+                                </div>
+                                <button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3.5 rounded-xl text-sm transition-all shadow-lg shadow-blue-600/30">登入系統</button>
+                            </form>
+                            <div className="pt-4 border-t border-slate-800 text-xs text-slate-500 text-center space-y-1">
+                                <p>預設帳號：<span className="text-slate-300 font-mono">2A01</span> – <span className="text-slate-300 font-mono">2A35</span> (密碼同學號)</p>
+                                <p>Boss: <strong className="text-purple-400 font-mono">2A05</strong> | Admin: <strong className="text-amber-400 font-mono">2A17, 2A28</strong></p>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
+                    <header className="bg-slate-900 border-b border-slate-800 sticky top-0 z-50">
+                        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
+                                <span className="text-xl font-black bg-gradient-to-r from-blue-400 to-indigo-300 bg-clip-text text-transparent">2Aplus</span>
+                                <span className="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded-md border border-slate-700">班級平台</span>
+                            </div>
+                            <div className="flex items-center space-x-4">
+                                <div className="flex items-center space-x-2 bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-700 text-sm font-semibold">
+                                    <span>{currentUser.username}</span>
+                                    <span className={`text-[11px] px-2 py-0.5 rounded-md font-bold ${currentUser.permission === 3 ? 'bg-purple-500/20 text-purple-400' : currentUser.permission === 2 ? 'bg-amber-500/20 text-amber-400' : 'bg-slate-700 text-slate-300'}`}>
+                                        {currentUser.permission === 3 ? 'LV.3 BOSS' : currentUser.permission === 2 ? 'LV.2 ADMIN' : 'LV.1 USER'}
+                                    </span>
+                                </div>
+                                <button onClick={() => setCurrentUser(null)} className="p-2 text-slate-400 hover:text-red-400 rounded-xl"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg></button>
+                            </div>
+                        </div>
+                        <div className="max-w-7xl mx-auto px-4 flex space-x-1 border-t border-slate-800 overflow-x-auto">
+                            {[
+                                { id: 'homework', label: '功課清單' },
+                                { id: 'exam', label: 'Quiz / Exam' },
+                                { id: 'announcement', label: '重要公告' },
+                                { id: 'qa', label: '課業互助區' },
+                                { id: 'vote', label: '班會投票' },
+                                ...(currentUser.permission === 3 ? [{ id: 'admin', label: '後台帳號管理' }] : [])
+                            ].map(tab => (
+                                <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`px-4 py-3 text-sm font-semibold border-b-2 whitespace-nowrap transition-all ${activeTab === tab.id ? 'border-blue-500 text-blue-400 bg-slate-800/40' : 'border-transparent text-slate-400 hover:text-slate-200'}`}>
+                                    {tab.label}
+                                </button>
+                            ))}
+                        </div>
+                    </header>
+
+                    <main className="flex-1 max-w-7xl w-full mx-auto px-4 py-8">
+                        {activeTab === 'homework' && (
+                            <div className="space-y-6">
+                                <h2 className="text-2xl font-bold">班級功課清單</h2>
+                                {currentUser.permission >= 2 && (
+                                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                                        <h3 className="text-base font-semibold text-blue-400 mb-4">{editingHwId ? '修改功課' : '新增功課'}</h3>
+                                        <form onSubmit={e => {
+                                            e.preventDefault();
+                                            if (editingHwId) {
+                                                setHomeworkList(homeworkList.map(hw => hw.id === editingHwId ? { ...hw, subject: hwSubject, teacher: hwTeacher, content: hwContent, page: hwPage, remark: hwRemark, startDate: hwStart, endDate: hwEnd } : hw));
+                                                setEditingHwId(null);
+                                            } else {
+                                                setHomeworkList([{ id: Date.now(), subject: hwSubject, teacher: hwTeacher, content: hwContent, page: hwPage, remark: hwRemark, startDate: hwStart, endDate: hwEnd, completedUsers: [] }, ...homeworkList]);
+                                            }
+                                            setHwSubject(''); setHwTeacher(''); setHwContent(''); setHwPage(''); setHwRemark(''); setHwStart(''); setHwEnd('');
+                                        }} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            <input type="text" required placeholder="科目" value={hwSubject} onChange={e => setHwSubject(e.target.value)} className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm" />
+                                            <input type="text" required placeholder="負責老師" value={hwTeacher} onChange={e => setHwTeacher(e.target.value)} className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm" />
+                                            <input type="text" placeholder="頁數" value={hwPage} onChange={e => setHwPage(e.target.value)} className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm" />
+                                            <input type="text" required placeholder="作業內容" value={hwContent} onChange={e => setHwContent(e.target.value)} className="md:col-span-2 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm" />
+                                            <input type="text" placeholder="備註" value={hwRemark} onChange={e => setHwRemark(e.target.value)} className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm" />
+                                            <div><label className="text-xs text-slate-400">開始日期</label><input type="date" required value={hwStart} onChange={e => setHwStart(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-200" /></div>
+                                            <div><label className="text-xs text-slate-400">截止日期</label><input type="date" required value={hwEnd} onChange={e => setHwEnd(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-200" /></div>
+                                            <div className="flex items-end"><button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 text-white font-medium py-2 rounded-xl text-sm">{editingHwId ? '更新功課' : '發布功課'}</button></div>
+                                        </form>
+                                    </div>
+                                )}
+                                <div className="space-y-4">
+                                    {homeworkList.map(hw => {
+                                        const isDone = hw.completedUsers.includes(currentUser.username);
+                                        return (
+                                            <div key={hw.id} className={`bg-slate-900 border rounded-2xl p-5 flex justify-between items-center ${isDone ? 'border-emerald-500/30 opacity-75' : 'border-slate-800'}`}>
+                                                <div className="flex items-start space-x-4">
+                                                    <button onClick={() => {
+                                                        setHomeworkList(homeworkList.map(item => item.id === hw.id ? { ...item, completedUsers: isDone ? item.completedUsers.filter(u => u !== currentUser.username) : [...item.completedUsers, currentUser.username] } : item));
+                                                    }} className={`mt-1 font-bold px-3 py-1 rounded-lg border text-xs ${isDone ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}`}>
+                                                        {isDone ? '已完成 ✓' : '標記完成'}
+                                                    </button>
+                                                    <div>
+                                                        <div className="flex items-center space-x-3"><span className="font-bold text-lg">{hw.subject}</span><span className="text-xs text-slate-400">老師: {hw.teacher}</span></div>
+                                                        <p className={`mt-1 ${isDone ? 'line-through text-slate-400' : 'text-slate-200'}`}>{hw.content}</p>
+                                                        <p className="text-xs text-slate-500 mt-1">期限: {hw.startDate} 至 {hw.endDate}</p>
+                                                    </div>
+                                                </div>
+                                                {currentUser.permission >= 2 && (
+                                                    <div className="flex gap-2">
+                                                        <button onClick={() => { setEditingHwId(hw.id); setHwSubject(hw.subject); setHwTeacher(hw.teacher); setHwContent(hw.content); setHwPage(hw.page); setHwRemark(hw.remark); setHwStart(hw.startDate); setHwEnd(hw.endDate); }} className="text-blue-400 text-xs">編輯</button>
+                                                        <button onClick={() => setHomeworkList(homeworkList.filter(h => h.id !== hw.id))} className="text-red-400 text-xs">刪除</button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'exam' && (
+                            <div className="space-y-6">
+                                <h2 className="text-2xl font-bold">Quiz / Examination 清單</h2>
+                                {currentUser.permission >= 2 && (
+                                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                                        <h3 className="text-base font-semibold text-amber-400 mb-4">新增/修改測驗日程</h3>
+                                        <form onSubmit={e => {
+                                            e.preventDefault();
+                                            if (editingExamId) {
+                                                setExamList(examList.map(ex => ex.id === editingExamId ? { ...ex, type: exType, subject: exSubject, content: exContent, remark: exRemark, date: exDate } : ex));
+                                                setEditingExamId(null);
+                                            } else {
+                                                setExamList([{ id: Date.now(), type: exType, subject: exSubject, content: exContent, remark: exRemark, date: exDate }, ...examList]);
+                                            }
+                                            setExSubject(''); setExContent(''); setExRemark(''); setExDate('');
+                                        }} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            <select value={exType} onChange={e => setExType(e.target.value)} className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-200">
+                                                <option value="Quiz">Quiz (小測)</option>
+                                                <option value="Test">Test (測驗)</option>
+                                                <option value="Examination">Examination (考試)</option>
+                                            </select>
+                                            <input type="text" required placeholder="科目" value={exSubject} onChange={e => setExSubject(e.target.value)} className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm" />
+                                            <input type="date" required value={exDate} onChange={e => setExDate(e.target.value)} className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-200" />
+                                            <input type="text" required placeholder="考核範圍" value={exContent} onChange={e => setExContent(e.target.value)} className="md:col-span-2 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm" />
+                                            <input type="text" placeholder="備註" value={exRemark} onChange={e => setExRemark(e.target.value)} className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm" />
+                                            <div className="md:col-span-3"><button type="submit" className="bg-amber-600 hover:bg-amber-500 text-white px-6 py-2 rounded-xl text-sm font-semibold">{editingExamId ? '儲存修改' : '發布日程'}</button></div>
+                                        </form>
+                                    </div>
+                                )}
+                                <div className="space-y-4">
+                                    {examList.map(ex => (
+                                        <div key={ex.id} className="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex justify-between items-center">
+                                            <div>
+                                                <span className="text-xs px-2 py-0.5 rounded font-bold bg-amber-500/20 text-amber-400">{ex.type}</span>
+                                                <h3 className="font-bold text-lg mt-1">{ex.subject} - {ex.content}</h3>
+                                                {ex.remark && <p className="text-xs text-slate-400">備註: {ex.remark}</p>}
+                                            </div>
+                                            <div className="text-right">
+                                                <div className="text-amber-400 font-mono font-bold">{ex.date}</div>
+                                                {currentUser.permission >= 2 && (
+                                                    <div className="flex gap-2 justify-end mt-1 text-xs">
+                                                        <button onClick={() => { setEditingExamId(ex.id); setExType(ex.type); setExSubject(ex.subject); setExContent(ex.content); setExRemark(ex.remark); setExDate(ex.date); }} className="text-blue-400">編輯</button>
+                                                        <button onClick={() => setExamList(examList.filter(e => e.id !== ex.id))} className="text-red-400">刪除</button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'announcement' && (
+                            <div className="space-y-6">
+                                <h2 className="text-2xl font-bold">重要 Announcements</h2>
+                                {currentUser.permission >= 2 && (
+                                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                                        <h3 className="text-base font-semibold text-emerald-400 mb-4">{editingAnnId ? '修改公告' : '發布班級公告'}</h3>
+                                        <form onSubmit={e => {
+                                            e.preventDefault();
+                                            if (editingAnnId) {
+                                                setAnnouncements(announcements.map(a => a.id === editingAnnId ? { ...a, title: annTitle, content: annContent, urgent: annUrgent } : a));
+                                                setEditingAnnId(null);
+                                            } else {
+                                                setAnnouncements([{ id: Date.now(), title: annTitle, content: annContent, author: currentUser.username, date: new Date().toISOString().split('T')[0], urgent: annUrgent }, ...announcements]);
+                                            }
+                                            setAnnTitle(''); setAnnContent(''); setAnnUrgent(false);
+                                        }} className="space-y-4">
+                                            <input type="text" required placeholder="公告標題" value={annTitle} onChange={e => setAnnTitle(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm" />
+                                            <textarea required placeholder="詳細公告內容..." value={annContent} onChange={e => setAnnContent(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-sm h-24" />
+                                            <div className="flex justify-between items-center">
+                                                <label className="flex items-center gap-2 text-xs text-red-400 font-semibold cursor-pointer"><input type="checkbox" checked={annUrgent} onChange={e => setAnnUrgent(e.target.checked)} /> 標記為緊急公告</label>
+                                                <button type="submit" className="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-2 rounded-xl text-sm font-semibold">{editingAnnId ? '儲存更新' : '發布公告'}</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                )}
+                                <div className="space-y-4">
+                                    {announcements.map(ann => (
+                                        <div key={ann.id} className={`bg-slate-900 border rounded-2xl p-6 ${ann.urgent ? 'border-red-500/50 bg-red-950/10' : 'border-slate-800'}`}>
+                                            <div className="flex justify-between items-start mb-2">
+                                                <div className="flex items-center gap-2">
+                                                    {ann.urgent && <span className="bg-red-600 text-white text-[10px] font-black px-2 py-0.5 rounded">緊急</span>}
+                                                    <h3 className="text-xl font-bold">{ann.title}</h3>
+                                                </div>
+                                                <span className="text-xs text-slate-500 font-mono">{ann.date}</span>
+                                            </div>
+                                            <p className="text-slate-300 text-sm whitespace-pre-line mb-3">{ann.content}</p>
+                                            <div className="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800 pt-3">
+                                                <span>發布者: {ann.author}</span>
+                                                {currentUser.permission >= 2 && (
+                                                    <div className="flex gap-2">
+                                                        <button onClick={() => { setEditingAnnId(ann.id); setAnnTitle(ann.title); setAnnContent(ann.content); setAnnUrgent(ann.urgent); }} className="text-blue-400">編輯</button>
+                                                        <button onClick={() => setAnnouncements(announcements.filter(a => a.id !== ann.id))} className="text-red-400">刪除</button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'qa' && (
+                            <div className="space-y-6">
+                                <h2 className="text-2xl font-bold">課業互助區</h2>
+                                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                                    <h3 className="text-base font-semibold text-purple-400 mb-4">我要發問</h3>
+                                    <form onSubmit={e => {
+                                        e.preventDefault();
+                                        setQaList([{ id: Date.now(), author: currentUser.username, subject: qaSubject, title: qaTitle, content: qaContent, resolved: false, answers: [] }, ...qaList]);
+                                        setQaTitle(''); setQaContent('');
+                                    }} className="space-y-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                            <select value={qaSubject} onChange={e => setQaSubject(e.target.value)} className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-200">
+                                                <option value="數學">數學科</option><option value="中文">中文科</option><option value="英文">英文科</option><option value="科學">科學科</option><option value="其他">其他</option>
+                                            </select>
+                                            <input type="text" required placeholder="問題標題" value={qaTitle} onChange={e => setQaTitle(e.target.value)} className="md:col-span-3 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm" />
+                                        </div>
+                                        <textarea required placeholder="詳細說明疑難..." value={qaContent} onChange={e => setQaContent(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-sm h-20" />
+                                        <button type="submit" className="bg-purple-600 hover:bg-purple-500 text-white px-6 py-2 rounded-xl text-sm font-semibold">提交問題</button>
+                                    </form>
+                                </div>
+                                <div className="space-y-4">
+                                    {qaList.map(qa => (
+                                        <div key={qa.id} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <span className="bg-purple-500/20 text-purple-400 text-xs px-2 py-0.5 rounded font-bold">{qa.subject}</span>
+                                                    {qa.resolved && <span className="ml-2 bg-emerald-500/20 text-emerald-400 text-xs px-2 py-0.5 rounded font-bold">已解決 ✓</span>}
+                                                    <h3 className="text-lg font-bold mt-1">{qa.title}</h3>
+                                                </div>
+                                                <div className="text-right text-xs text-slate-500">
+                                                    <div>發問: {qa.author}</div>
+                                                    {currentUser.permission >= 2 && (
+                                                        <div className="flex gap-2 mt-1">
+                                                            <button onClick={() => setQaList(qaList.map(q => q.id === qa.id ? { ...q, resolved: !q.resolved } : q))} className="text-emerald-400">{qa.resolved ? '標記未解決' : '標記已解決'}</button>
+                                                            <button onClick={() => setQaList(qaList.filter(q => q.id !== qa.id))} className="text-red-400">刪除</button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <p className="text-slate-300 text-sm">{qa.content}</p>
+                                            <div className="border-t border-slate-800 pt-3 space-y-2">
+                                                <h4 className="text-xs font-semibold text-slate-400">解答 ({qa.answers.length})</h4>
+                                                {qa.answers.map(ans => (
+                                                    <div key={ans.id} className="bg-slate-950 p-3 rounded-xl border border-slate-800 text-sm flex justify-between items-center">
+                                                        <div><span className="text-xs text-blue-400 font-semibold">{ans.author}: </span><span className="text-slate-200">{ans.content}</span></div>
+                                                        {currentUser.permission >= 2 && <button onClick={() => setQaList(qaList.map(q => q.id === qa.id ? { ...q, answers: q.answers.filter(a => a.id !== ans.id) } : q))} className="text-red-400 text-xs">刪除</button>}
+                                                    </div>
+                                                ))}
+                                                <div className="flex gap-2 pt-1">
+                                                    <input type="text" placeholder="撰寫解答..." id={`ans-${qa.id}`} className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-1.5 text-sm" />
+                                                    <button onClick={() => {
+                                                        const input = document.getElementById(`ans-${qa.id}`);
+                                                        if (!input.value.trim()) return;
+                                                        setQaList(qaList.map(q => q.id === qa.id ? { ...q, answers: [...q.answers, { id: Date.now(), author: currentUser.username, content: input.value }] } : q));
+                                                        input.value = '';
+                                                    }} className="bg-blue-600 text-white px-4 py-1.5 rounded-xl text-sm">回覆</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'vote' && (
+                            <div className="space-y-6">
+                                <h2 className="text-2xl font-bold">班會投票區</h2>
+                                {currentUser.permission >= 2 && (
+                                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                                        <h3 className="text-base font-semibold text-indigo-400 mb-4">{editingVoteId ? '修改投票' : '發起新投票'}</h3>
+                                        <form onSubmit={e => {
+                                            e.preventDefault();
+                                            const validOptions = voteOptions.filter(opt => opt.trim() !== '');
+                                            if (validOptions.length < 2) return;
+                                            if (editingVoteId) {
+                                                setVotes(votes.map(v => v.id === editingVoteId ? { ...v, title: voteTitle, isAnonymous: voteIsAnonymous, isMultiple: voteIsMultiple, options: validOptions.map((text, idx) => ({ id: idx + 1, text, votes: [] })) } : v));
+                                                setEditingVoteId(null);
+                                            } else {
+                                                setVotes([{ id: Date.now(), title: voteTitle, isAnonymous: voteIsAnonymous, isMultiple: voteIsMultiple, options: validOptions.map((text, idx) => ({ id: idx + 1, text, votes: [] })) }, ...votes]);
+                                            }
+                                            setVoteTitle(''); setVoteOptions(['', '']);
+                                        }} className="space-y-4">
+                                            <input type="text" required placeholder="投票主題" value={voteTitle} onChange={e => setVoteTitle(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm" />
+                                            {voteOptions.map((opt, idx) => (
+                                                <div key={idx} className="flex gap-2">
+                                                    <input type="text" placeholder={`選項 ${idx + 1}`} value={opt} onChange={e => { const newOpts = [...voteOptions]; newOpts[idx] = e.target.value; setVoteOptions(newOpts); }} className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-1.5 text-sm" />
+                                                    {voteOptions.length > 2 && <button type="button" onClick={() => setVoteOptions(voteOptions.filter((_, i) => i !== idx))} className="text-red-400 px-2">刪除</button>}
+                                                </div>
+                                            ))}
+                                            <button type="button" onClick={() => setVoteOptions([...voteOptions, ''])} className="text-xs text-indigo-400 font-semibold">+ 新增選項</button>
+                                            <div className="flex gap-4 text-xs">
+                                                <label><input type="checkbox" checked={voteIsAnonymous} onChange={e => setVoteIsAnonymous(e.target.checked)} /> 匿名投票</label>
+                                                <label><input type="checkbox" checked={voteIsMultiple} onChange={e => setVoteIsMultiple(e.target.checked)} /> 允許多選</label>
+                                            </div>
+                                            <button type="submit" className="bg-indigo-600 text-white px-6 py-2 rounded-xl text-sm font-semibold">{editingVoteId ? '儲存修改' : '發起投票'}</button>
+                                        </form>
+                                    </div>
+                                )}
+                                <div className="space-y-4">
+                                    {votes.map(v => {
+                                        const totalCount = v.options.reduce((acc, curr) => acc + curr.votes.length, 0);
+                                        return (
+                                            <div key={v.id} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+                                                <div className="flex justify-between items-start">
+                                                    <h3 className="text-xl font-bold">{v.title}</h3>
+                                                    {currentUser.permission >= 2 && (
+                                                        <div className="flex gap-2 text-xs">
+                                                            <button onClick={() => { setEditingVoteId(v.id); setVoteTitle(v.title); setVoteIsAnonymous(v.isAnonymous); setVoteIsMultiple(v.isMultiple); setVoteOptions(v.options.map(o => o.text)); }} className="text-blue-400">編輯</button>
+                                                            <button onClick={() => setVotes(votes.filter(item => item.id !== v.id))} className="text-red-400">刪除</button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="space-y-3">
+                                                    {v.options.map(opt => {
+                                                        const hasVoted = opt.votes.includes(currentUser.username);
+                                                        const pct = totalCount > 0 ? Math.round((opt.votes.length / totalCount) * 100) : 0;
+                                                        return (
+                                                            <div key={opt.id} className="space-y-1">
+                                                                <button onClick={() => {
+                                                                    setVotes(votes.map(vote => vote.id === v.id ? { ...vote, options: vote.options.map(o => {
+                                                                        if (o.id === opt.id) {
+                                                                            const voted = o.votes.includes(currentUser.username);
+                                                                            return { ...o, votes: voted ? o.votes.filter(u => u !== currentUser.username) : [...o.votes, currentUser.username] };
+                                                                        } else if (!vote.isMultiple) {
+                                                                            return { ...o, votes: o.votes.filter(u => u !== currentUser.username) };
+                                                                        }
+                                                                        return o;
+                                                                    }) } : vote));
+                                                                }} className={`w-full flex justify-between items-center p-3 rounded-xl border text-sm ${hasVoted ? 'bg-indigo-600/20 border-indigo-500/50 text-indigo-300 font-bold' : 'bg-slate-950 border-slate-800 text-slate-300'}`}>
+                                                                    <span>{hasVoted ? '✓ ' : ''}{opt.text}</span>
+                                                                    <span className="font-mono text-xs">{opt.votes.length} 票 ({pct}%)</span>
+                                                                </button>
+                                                                <div className="w-full bg-slate-950 h-2 rounded-full overflow-hidden border border-slate-800"><div className="bg-indigo-500 h-full" style={{ width: `${pct}%` }} /></div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'admin' && currentUser.permission === 3 && (
+                            <div className="space-y-6">
+                                <h2 className="text-2xl font-bold">後台帳號與權限控制 (LV.3 Boss)</h2>
+                                {adminMsg && <div className="bg-emerald-500/10 text-emerald-400 p-3 rounded-xl text-sm">{adminMsg}</div>}
+                                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                                    <form onSubmit={e => {
+                                        e.preventDefault();
+                                        if (!selectedUser) return;
+                                        setUsers(users.map(u => u.username === selectedUser ? { ...u, password: newPassword.trim() ? newPassword.trim() : u.password, permission: Number(newPermLevel) } : u));
+                                        if (currentUser.username === selectedUser) setCurrentUser(prev => ({ ...prev, password: newPassword.trim() ? newPassword.trim() : prev.password, permission: Number(newPermLevel) }));
+                                        setAdminMsg(`成功更新 ${selectedUser} 的資料！`);
+                                        setTimeout(() => setAdminMsg(''), 3000);
+                                        setNewPassword('');
+                                    }} className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                        <select value={selectedUser} onChange={e => { setSelectedUser(e.target.value); const u = users.find(item => item.username === e.target.value); if (u) setNewPermLevel(u.permission); }} className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-200">
+                                            <option value="">-- 選擇同學學號 --</option>
+                                            {users.map(u => <option key={u.username} value={u.username}>{u.username} (LV.{u.permission})</option>)}
+                                        </select>
+                                        <input type="text" placeholder="新密碼 (留空則不變)" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm" />
+                                        <select value={newPermLevel} onChange={e => setNewPermLevel(e.target.value)} className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-200">
+                                            <option value={1}>LV.1 - USER</option>
+                                            <option value={2}>LV.2 - ADMIN</option>
+                                            <option value={3}>LV.3 - BOSS</option>
+                                        </select>
+                                        <button type="submit" className="bg-purple-600 hover:bg-purple-500 text-white font-semibold py-2 rounded-xl text-sm">確認覆寫</button>
+                                    </form>
+                                </div>
+                                <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+                                    <table className="w-full text-left text-sm text-slate-300">
+                                        <thead className="bg-slate-950 text-xs uppercase text-slate-500 border-b border-slate-800">
+                                            <tr><th className="p-4">學號</th><th className="p-4">密碼</th><th className="p-4">權限級別</th></tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-800">
+                                            {users.map(u => (
+                                                <tr key={u.username} className="hover:bg-slate-800/30">
+                                                    <td className="p-4 font-bold font-mono">{u.username}</td>
+                                                    <td className="p-4 font-mono text-slate-400">{u.password}</td>
+                                                    <td className="p-4"><span className={`text-xs px-2 py-0.5 rounded font-bold ${u.permission === 3 ? 'bg-purple-500/20 text-purple-400' : u.permission === 2 ? 'bg-amber-500/20 text-amber-400' : 'bg-slate-800 text-slate-400'}`}>LV.{u.permission}</span></td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
+                    </main>
+                </div>
+            );
+        }
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html>
